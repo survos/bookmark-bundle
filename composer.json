@@ -1,0 +1,29 @@
+{
+    "name": "survos/bookmark-bundle",
+    "description": "Local bookmarks for arbitrary resources with optional peer sharing.",
+    "type": "symfony-bundle",
+    "license": "MIT",
+    "require": {
+        "php": "^8.5",
+        "survos/kit-bundle": "^2.33",
+        "survos/field-bundle": "^2.5",
+        "doctrine/orm": "^3.7",
+        "doctrine/doctrine-bundle": "^3.0",
+        "symfony/string": "^8.1",
+        "symfony/serializer": "^8.1",
+        "symfony/uid": "^8.1"
+    },
+    "suggest": {
+        "symfony/messenger": "Dispatch bookmark snapshots for optional sharing."
+    },
+    "autoload": {
+        "psr-4": {
+            "Survos\\BookmarkBundle\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Survos\\BookmarkBundle\\Tests\\": "tests/"
+        }
+    }
+}
