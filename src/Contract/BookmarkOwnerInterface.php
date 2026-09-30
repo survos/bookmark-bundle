@@ -5,10 +5,9 @@ declare(strict_types=1);
 namespace Survos\BookmarkBundle\Contract;
 
 /**
- * Optional marker a host app's User can implement so BookmarkManager's
- * method signatures read as something more specific than `object $user`.
- * Not required — BookmarkManager works with any object the host's concrete
- * Bookmark/Folder constructors accept as $user. See docs/bookmarks.md.
+ * Local owner of bundle-owned bookmarks and folders. Doctrine resolves this
+ * association target to owner_class; no inverse collections are required.
+ * Legacy host-owned entities may continue without implementing this contract.
  */
 interface BookmarkOwnerInterface
 {

@@ -3,29 +3,86 @@
 Local user-owned bookmarks for arbitrary resources, with optional dispatch to peers.
 No Folio, ActivityPub, HTTP client or Messenger dependency is needed for local CRUD.
 
-## Install and configure
+## Default: use the bundle entities
 
 Require `survos/bookmark-bundle` and register `Survos\BookmarkBundle\SurvosBookmarkBundle`.
-The new package is currently developed through the monorepo Composer path repository;
-publish/split it before replacing that development dependency with a tagged release.
+The bundle provides concrete `Entity\Bookmark` and `Entity\Folder` and their repositories.
+Kit's `HasDoctrineEntities` automatically registers them in the default entity manager.
 
 ```yaml
 survos_bookmark:
+    owner_class: App\Entity\User
+    # auto_mapping: true  # default
+```
+
+`App\Entity\User` implements `Survos\BookmarkBundle\Contract\BookmarkOwnerInterface`
+(`getId(): int|string|null`; a narrower compatible return type is fine). The bundle
+configures Doctrine's `resolve_target_entities` for the owner, bookmark and folder
+interfaces. User does not need inverse collections or bookmark-specific fields.
+These entities and User must use the same entity manager. The referenced resource
+can live anywhere. Run the host application's Doctrine migration diff and review it.
+
+`BookmarkManager` takes the owner explicitly, so HTTP controllers, CLI commands and
+message handlers can all use it. Authentication stays in the host application; no
+second User manager or implicit current-user service is necessary.
+
+## Customized: extend the bundle entities
+
+```yaml
+survos_bookmark:
+    auto_mapping: false
+    owner_class: App\Entity\User
     bookmark_class: App\Entity\Bookmark
     folder_class: App\Entity\Folder
 ```
 
-The application owns its concrete Doctrine entities and User associations. Extend
-`Entity\BookmarkBase` and `Entity\FolderBase`; use `Entity\ShareableBookmarkBase`
-when you need URL targets, notes, tags and origin metadata. Do not map these base
-classes into a separate entity manager. They inherit into the host's own mapping.
+```php
+use Doctrine\ORM\Mapping as ORM;
+use Survos\BookmarkBundle as Bookmarks;
 
-Retain the unique constraint on `(user, provider, dataset, coreCode, localId)`.
-Concrete Bookmark constructors accept named parameters `user, provider, dataset,
-coreCode, localId, folder=null, dtoType=null, label=null`. Folder constructors accept
-`user, name, slug, visibility`. Initialize `id` (Ulid) and `created` in both.
-Repository bases and `FolderVisibility` are included. All folder assignments must
-belong to the bookmark owner; the manager enforces this on add and move.
+// App\Entity\Bookmark
+#[ORM\Entity(repositoryClass: Bookmarks\Repository\BookmarkRepository::class)]
+#[ORM\Table(name: 'bookmark')]
+#[ORM\UniqueConstraint(name: 'uniq_bookmark_row', fields: ['user', 'provider', 'dataset', 'coreCode', 'localId'])]
+class Bookmark extends Bookmarks\Entity\Bookmark
+{
+    #[ORM\Column(nullable: true)]
+    public ?string $annotation = null;
+}
+
+// App\Entity\Folder
+#[ORM\Entity(repositoryClass: Bookmarks\Repository\FolderRepository::class)]
+#[ORM\Table(name: 'folder')]
+#[ORM\UniqueConstraint(name: 'uniq_folder_user_slug', fields: ['user', 'slug'])]
+class Folder extends Bookmarks\Entity\Folder {}
+```
+
+Use the app's normal `App\Entity` mapping only. Do **not** also map the bundle's
+Entity namespace: Doctrine must treat those parents as unmapped for this mode.
+Inherited property mappings and constructors are reused, while class-level Entity,
+Table and UniqueConstraint attributes must be declared on the app classes.
+No discriminator or joined inheritance tables are required. Repositories and both
+directions of Bookmark↔Folder associations resolve to the configured app classes.
+Keep the owner/target and owner/slug unique constraints when customizing tables.
+Configuring custom classes with auto_mapping enabled fails early.
+
+## Existing custom entities
+
+The earlier `BookmarkBase`, `ShareableBookmarkBase`, `FolderBase` and repository
+bases remain supported. Apps already declaring their own associations can use:
+
+```yaml
+survos_bookmark:
+    auto_mapping: false
+    bookmark_class: App\Entity\Bookmark
+    folder_class: App\Entity\Folder
+```
+
+`owner_class` is optional in this legacy mode, because the app already owns its User
+association. Those existing constructors accept named parameters `user, provider,
+dataset, coreCode, localId, folder=null, dtoType=null, label=null`; Folder constructors
+accept `user, name, slug, visibility`. All folder assignments must belong to the
+bookmark owner. Merely retaining this mode needs no database migration.
 
 ## Resource references
 
@@ -72,8 +129,7 @@ Local saves are always local. Enable a dispatch service only where needed:
 
 ```yaml
 survos_bookmark:
-    bookmark_class: App\Entity\Bookmark
-    folder_class: App\Entity\Folder
+    owner_class: App\Entity\User
     sharing:
         enabled: true
         destinations: [recordia, another_archive]
@@ -101,7 +157,8 @@ Folio requires this package and retains compatibility names for entities, reposi
 the visibility enum and manager. Its BookmarkBase adds only `folioCode` and
 `rowRouteParams`; existing database columns and constructor calls remain unchanged.
 Legacy `survos_folio.bookmark_class/folder_class` configuration still registers the
-canonical manager and a compatible legacy service. No schema migration is needed just for
+canonical manager and a compatible legacy service. Also configure the explicit
+legacy `survos_bookmark` mode above so automatic bundle mapping is disabled. No schema migration is needed just for
 this extraction. Opting into `ShareableBookmarkBase` adds `target_url`, `origin`,
 `notes` (if not already present), and `tags`; generate a host migration.
 
