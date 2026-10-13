@@ -49,7 +49,7 @@ final class BookmarkKernel extends Kernel
         ]);
         $config = ['owner_class' => Owner\User::class];
         if ($this->custom) {
-            $config += ['auto_mapping' => false, 'bookmark_class' => Custom\Bookmark::class, 'folder_class' => Custom\Folder::class];
+            $config += ['auto_mapping' => false, 'bookmark_class' => Custom\Bookmark::class, 'folder_class' => Custom\Folder::class, 'folder_item_class' => Custom\FolderItem::class];
         }
         $container->extension('survos_bookmark', array_replace($config, $this->overrides));
     }

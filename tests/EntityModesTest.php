@@ -28,7 +28,7 @@ final class EntityModesTest extends TestCase
             $metadata = $em->getMetadataFactory()->getAllMetadata();
             self::assertSame([], (new SchemaValidator($em))->validateMapping());
             (new SchemaTool($em))->createSchema($metadata);
-            self::assertEqualsCanonicalizing($custom ? ['test_user', 'custom_bookmark', 'custom_folder'] : ['test_user', 'bookmark', 'folder'],
+            self::assertEqualsCanonicalizing($custom ? ['test_user', 'custom_bookmark', 'custom_folder', 'custom_folder_item'] : ['test_user', 'bookmark', 'folder', 'folder_item'],
                 $em->getConnection()->createSchemaManager()->listTableNames());
             $bookmarkClass = $custom ? Custom\Bookmark::class : Bookmark::class;
             $folderClass = $custom ? Custom\Folder::class : Folder::class;
@@ -64,6 +64,20 @@ final class EntityModesTest extends TestCase
             self::assertInstanceOf($bookmarkClass, $newReceipt);
             self::assertSame(['history'], $newReceipt->tags);
             self::assertSame('A note', $newReceipt->notes);
+            // Ordered, many-to-many membership: one bookmark in two folders, appended with gaps.
+            $album = $manager->createFolder($bookmark->user, 'Album');
+            $first = $manager->place($album, $newReceipt);
+            $second = $manager->place($album, $bookmark);
+            self::assertSame($first, $manager->place($album, $newReceipt), 'placing is idempotent');
+            self::assertSame([10, 20], [$first->position, $second->position]);
+            $manager->place($em->find($folderClass, $folderId), $bookmark);
+            $em->clear();
+            $album = $em->find($folderClass, $album->id);
+            self::assertSame(['43', '42'], $album->items->map(fn ($i) => $i->bookmark->localId)->toArray());
+            $manager->unplace($album, $album->items->first()->bookmark);
+            $em->clear();
+            self::assertCount(1, $em->find($folderClass, $album->id)->items);
+            $bookmark = $em->find($bookmarkClass, $id);
             $foreignFolder = $manager->createFolder($em->find(User::class, 'another-owner'), 'Private');
             $this->expectException(\InvalidArgumentException::class);
             $manager->move($bookmark, $foreignFolder);

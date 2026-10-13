@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Survos\BookmarkBundle\Service;
 
 use Doctrine\ORM\EntityManagerInterface;
+use Survos\BookmarkBundle\Entity\FolderItemBase;
 use Survos\BookmarkBundle\Enum\FolderVisibility;
 use Symfony\Component\String\Slugger\SluggerInterface;
 
@@ -28,6 +29,7 @@ class BookmarkManager
         private readonly SluggerInterface $slugger,
         private readonly string $bookmarkClass,
         private readonly string $folderClass,
+        private readonly ?string $folderItemClass = null,
     ) {
     }
 
@@ -158,6 +160,40 @@ class BookmarkManager
         }
         $bookmark->folder = $folder;
         $this->em->flush();
+    }
+
+    /**
+     * Place $bookmark in $folder's ordered membership (idempotent: an existing item is returned
+     * unmoved). Without $position it is appended after the last item. A bookmark may sit in any
+     * number of its owner's folders; its home `folder` is unaffected.
+     */
+    public function place(object $folder, object $bookmark, ?int $position = null): object
+    {
+        $class = $this->folderItemClass ?? throw new \LogicException('Configure survos_bookmark.folder_item_class to use ordered folders.');
+        if ($existing = $this->em->getRepository($class)->findOneBy(['folder' => $folder, 'bookmark' => $bookmark])) {
+            return $existing;
+        }
+        $position ??= $this->lastPosition($folder) + FolderItemBase::POSITION_STEP;
+        $item = new $class(folder: $folder, bookmark: $bookmark, position: $position);
+        $this->em->persist($item);
+        $this->em->flush();
+
+        return $item;
+    }
+
+    public function unplace(object $folder, object $bookmark): void
+    {
+        $class = $this->folderItemClass ?? throw new \LogicException('Configure survos_bookmark.folder_item_class to use ordered folders.');
+        if ($existing = $this->em->getRepository($class)->findOneBy(['folder' => $folder, 'bookmark' => $bookmark])) {
+            $this->em->remove($existing);
+            $this->em->flush();
+        }
+    }
+
+    private function lastPosition(object $folder): int
+    {
+        // findOneBy, not a DQL MAX(): the persister binds the folder's ULID with its column type.
+        return $this->em->getRepository($this->folderItemClass)->findOneBy(['folder' => $folder], ['position' => 'DESC'])?->position ?? 0;
     }
 
     public function createFolder(object $user, string $name, FolderVisibility $visibility = FolderVisibility::Private): object

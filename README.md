@@ -84,6 +84,22 @@ dataset, coreCode, localId, folder=null, dtoType=null, label=null`; Folder const
 accept `user, name, slug, visibility`. All folder assignments must belong to the
 bookmark owner. Merely retaining this mode needs no database migration.
 
+## Ordered folders
+
+A bookmark has one home `folder`, but folder membership can be many-to-many and ordered (the
+same photo in several albums, a story's stops in sequence). `FolderItem` holds that: one row
+per (folder, bookmark) with a gapped `position` (steps of 10), and `Folder::$items` is ordered
+by it. Bundle entities include it; custom entities opt in by extending `FolderItemBase`,
+declaring `folder`/`bookmark` and an `items` collection on their Folder, and configuring:
+
+```yaml
+survos_bookmark:
+    folder_item_class: App\Entity\FolderItem
+```
+
+`BookmarkManager::place($folder, $bookmark, ?$position)` appends (idempotently) and
+`unplace()` removes. A folder item's bookmark and folder must share an owner.
+
 ## Resource references
 
 ```php

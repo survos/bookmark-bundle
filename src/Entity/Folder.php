@@ -6,7 +6,7 @@ namespace Survos\BookmarkBundle\Entity;
 
 use Doctrine\Common\Collections\{ArrayCollection, Collection};
 use Doctrine\ORM\Mapping as ORM;
-use Survos\BookmarkBundle\Contract\{BookmarkInterface, BookmarkOwnerInterface, FolderInterface};
+use Survos\BookmarkBundle\Contract\{BookmarkInterface, BookmarkOwnerInterface, FolderInterface, FolderItemInterface};
 use Survos\BookmarkBundle\Enum\FolderVisibility;
 use Survos\BookmarkBundle\Repository\FolderRepository;
 use Symfony\Component\Serializer\Attribute\Groups;
@@ -20,6 +20,11 @@ class Folder extends FolderBase implements FolderInterface
     /** @var Collection<int, BookmarkInterface> */
     #[ORM\OneToMany(targetEntity: BookmarkInterface::class, mappedBy: 'folder')]
     public protected(set) Collection $bookmarks;
+
+    /** @var Collection<int, FolderItemInterface> ordered membership; see FolderItemBase */
+    #[ORM\OneToMany(targetEntity: FolderItemInterface::class, mappedBy: 'folder')]
+    #[ORM\OrderBy(['position' => 'ASC'])]
+    public protected(set) Collection $items;
 
     public function __construct(
         #[ORM\ManyToOne(targetEntity: BookmarkOwnerInterface::class)]
@@ -36,6 +41,7 @@ class Folder extends FolderBase implements FolderInterface
         $this->slug = $slug;
         $this->visibility = $visibility;
         $this->bookmarks = new ArrayCollection();
+        $this->items = new ArrayCollection();
     }
 
     #[Groups(['folder:read'])]

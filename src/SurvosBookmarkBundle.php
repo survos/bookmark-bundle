@@ -7,8 +7,8 @@ namespace Survos\BookmarkBundle;
 use Survos\BookmarkBundle\Service\{BookmarkManager, BookmarkSharing};
 use Survos\Kit\AbstractSurvosBundle;
 use Survos\Kit\Traits\HasDoctrineEntities;
-use Survos\BookmarkBundle\Entity\{Bookmark, Folder};
-use Survos\BookmarkBundle\Contract\{BookmarkInterface, BookmarkOwnerInterface, FolderInterface};
+use Survos\BookmarkBundle\Entity\{Bookmark, Folder, FolderItem};
+use Survos\BookmarkBundle\Contract\{BookmarkInterface, BookmarkOwnerInterface, FolderInterface, FolderItemInterface};
 use Survos\BookmarkBundle\Repository\{BookmarkRepository, FolderRepository};
 use Symfony\Component\Config\Definition\Processor;
 use Symfony\Component\Config\Definition\Configurator\DefinitionConfigurator;
@@ -27,6 +27,8 @@ final class SurvosBookmarkBundle extends AbstractSurvosBundle
             ->scalarNode('owner_class')->defaultNull()->end()
             ->scalarNode('bookmark_class')->defaultValue(Bookmark::class)->cannotBeEmpty()->end()
             ->scalarNode('folder_class')->defaultValue(Folder::class)->cannotBeEmpty()->end()
+            ->scalarNode('folder_item_class')->defaultNull()
+                ->info('Ordered folder membership (FolderItemBase subclass). Bundle entities use FolderItem; custom entities opt in.')->end()
             ->arrayNode('sharing')->addDefaultsIfNotSet()->children()
                 ->booleanNode('enabled')->defaultFalse()->end()
                 ->arrayNode('destinations')->scalarPrototype()->end()->defaultValue([])->end()
@@ -40,6 +42,7 @@ final class SurvosBookmarkBundle extends AbstractSurvosBundle
         $this->validateEntityConfiguration($config);
         $container->services()->set(BookmarkManager::class)->autowire()->autoconfigure()->public()->args([
             '$bookmarkClass' => $config['bookmark_class'], '$folderClass' => $config['folder_class'],
+            '$folderItemClass' => self::folderItemClass($config),
         ]);
         $container->services()->set(BookmarkRepository::class)->autowire()->autoconfigure()->public()
             ->arg('$bookmarkClass', $config['bookmark_class']);
@@ -68,6 +71,9 @@ final class SurvosBookmarkBundle extends AbstractSurvosBundle
         if (is_a($config['folder_class'], FolderInterface::class, true)) {
             $targets[FolderInterface::class] = $config['folder_class'];
         }
+        if (is_a($itemClass = self::folderItemClass($config) ?? '', FolderItemInterface::class, true)) {
+            $targets[FolderItemInterface::class] = $itemClass;
+        }
         if ($config['owner_class'] !== null) {
             $targets[BookmarkOwnerInterface::class] = $config['owner_class'];
         }
@@ -81,6 +87,12 @@ final class SurvosBookmarkBundle extends AbstractSurvosBundle
         if ($config['auto_mapping'] && ($config['bookmark_class'] !== Bookmark::class || $config['folder_class'] !== Folder::class)) {
             throw new \InvalidArgumentException('Disable survos_bookmark.auto_mapping when configuring custom bookmark/folder entities.');
         }
+        if ($config['auto_mapping'] && !\in_array($config['folder_item_class'], [null, FolderItem::class], true)) {
+            throw new \InvalidArgumentException('Disable survos_bookmark.auto_mapping when configuring a custom folder_item_class.');
+        }
+        if (!$config['auto_mapping'] && $config['folder_item_class'] === FolderItem::class) {
+            throw new \InvalidArgumentException('With auto_mapping disabled, folder_item_class must be your own FolderItemBase subclass.');
+        }
         if (!$config['auto_mapping'] && ($config['bookmark_class'] === Bookmark::class || $config['folder_class'] === Folder::class)) {
             throw new \InvalidArgumentException('With auto_mapping disabled, configure both custom bookmark_class and folder_class.');
         }
@@ -88,5 +100,11 @@ final class SurvosBookmarkBundle extends AbstractSurvosBundle
         if ($usesOwnerContract && ($config['owner_class'] === null || !is_a($config['owner_class'], BookmarkOwnerInterface::class, true))) {
             throw new \InvalidArgumentException('Configure owner_class with an entity implementing BookmarkOwnerInterface.');
         }
+    }
+
+    /** Bundle entities always have ordered folders; custom entities only when they configure a class. */
+    private static function folderItemClass(array $config): ?string
+    {
+        return $config['auto_mapping'] ? FolderItem::class : $config['folder_item_class'];
     }
 }
