@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace Survos\BookmarkBundle\Tests\Fixtures;
 
 use Doctrine\Bundle\DoctrineBundle\DoctrineBundle;
+use Survos\BookmarkBundle\SurvosBookmarkBundle;
 use Symfony\Bundle\FrameworkBundle\FrameworkBundle;
 use Symfony\Bundle\FrameworkBundle\Kernel\MicroKernelTrait;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 use Symfony\Component\HttpKernel\Kernel;
-use Survos\BookmarkBundle\SurvosBookmarkBundle;
 
 final class BookmarkKernel extends Kernel
 {
@@ -32,7 +32,10 @@ final class BookmarkKernel extends Kernel
         return sys_get_temp_dir().'/survos-bookmark-modes-'.getmypid().'/'.($this->custom ? 'custom' : 'default').'-'.md5(serialize($this->overrides));
     }
 
-    public function getLogDir(): string { return $this->getCacheDir().'/logs'; }
+    public function getLogDir(): string
+    {
+        return $this->getCacheDir().'/logs';
+    }
 
     protected function configureContainer(ContainerConfigurator $container): void
     {

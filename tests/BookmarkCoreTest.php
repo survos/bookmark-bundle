@@ -5,14 +5,15 @@ declare(strict_types=1);
 namespace Survos\BookmarkBundle\Tests;
 
 use PHPUnit\Framework\TestCase;
-use Survos\BookmarkBundle\Model\{BookmarkSnapshot, TargetReference};
-use Survos\BookmarkBundle\Service\BookmarkSharing;
 use Survos\BookmarkBundle\Message\ShareBookmark;
+use Survos\BookmarkBundle\Model\BookmarkSnapshot;
+use Survos\BookmarkBundle\Model\TargetReference;
+use Survos\BookmarkBundle\Service\BookmarkSharing;
+use Symfony\Component\DependencyInjection\ServiceLocator;
 use Symfony\Component\Messenger\MessageBus;
 use Symfony\Component\Messenger\Middleware\SendMessageMiddleware;
 use Symfony\Component\Messenger\Transport\InMemory\InMemoryTransport;
 use Symfony\Component\Messenger\Transport\Sender\SendersLocator;
-use Symfony\Component\DependencyInjection\ServiceLocator;
 
 final class BookmarkCoreTest extends TestCase
 {

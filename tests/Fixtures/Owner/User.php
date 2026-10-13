@@ -15,7 +15,11 @@ class User implements BookmarkOwnerInterface
         #[ORM\Id]
         #[ORM\Column(length: 40)]
         private string $id,
-    ) {}
+    ) {
+    }
 
-    public function getId(): string { return $this->id; }
+    public function getId(): string
+    {
+        return $this->id;
+    }
 }

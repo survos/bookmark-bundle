@@ -10,7 +10,7 @@ use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Uid\Ulid;
 
 /**
- * One ordered entry of a folder: "this bookmark, at this position, in this folder."
+ * One ordered entry of a folder: "this bookmark, at this position, in this folder.".
  *
  * Bookmark stays one row per (owner, target) with a single home `folder`. Folder membership
  * is many-to-many and ordered, though -- the same photo in several of one owner's albums, a

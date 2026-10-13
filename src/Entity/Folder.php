@@ -4,9 +4,13 @@ declare(strict_types=1);
 
 namespace Survos\BookmarkBundle\Entity;
 
-use Doctrine\Common\Collections\{ArrayCollection, Collection};
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
-use Survos\BookmarkBundle\Contract\{BookmarkInterface, BookmarkOwnerInterface, FolderInterface, FolderItemInterface};
+use Survos\BookmarkBundle\Contract\BookmarkInterface;
+use Survos\BookmarkBundle\Contract\BookmarkOwnerInterface;
+use Survos\BookmarkBundle\Contract\FolderInterface;
+use Survos\BookmarkBundle\Contract\FolderItemInterface;
 use Survos\BookmarkBundle\Enum\FolderVisibility;
 use Survos\BookmarkBundle\Repository\FolderRepository;
 use Symfony\Component\Serializer\Attribute\Groups;

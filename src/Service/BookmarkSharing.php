@@ -11,7 +11,9 @@ use Symfony\Component\Messenger\MessageBusInterface;
 /** Explicit dispatch only. Saving and receiving never call this service automatically. */
 final readonly class BookmarkSharing
 {
-    public function __construct(private MessageBusInterface $bus, private array $destinations = []) {}
+    public function __construct(private MessageBusInterface $bus, private array $destinations = [])
+    {
+    }
 
     public function share(string $destination, BookmarkSnapshot $bookmark): void
     {

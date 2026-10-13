@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Survos\BookmarkBundle\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
+use Survos\BookmarkBundle\Enum\FolderVisibility;
 use Survos\FieldBundle\Attribute\Field;
 use Survos\FieldBundle\Enum\Widget;
-use Survos\BookmarkBundle\Enum\FolderVisibility;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Uid\Ulid;
 
@@ -48,6 +48,6 @@ abstract class FolderBase
 
     /** Not serialized — read by Get operation security expressions only. */
     public bool $isPrivate {
-        get => $this->visibility === FolderVisibility::Private;
+        get => FolderVisibility::Private === $this->visibility;
     }
 }

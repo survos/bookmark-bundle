@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace Survos\BookmarkBundle\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
-use Survos\BookmarkBundle\Contract\{BookmarkInterface, BookmarkOwnerInterface, FolderInterface};
+use Survos\BookmarkBundle\Contract\BookmarkInterface;
+use Survos\BookmarkBundle\Contract\BookmarkOwnerInterface;
+use Survos\BookmarkBundle\Contract\FolderInterface;
 use Survos\BookmarkBundle\Repository\BookmarkRepository;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Uid\Ulid;

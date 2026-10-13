@@ -45,6 +45,7 @@ class BookmarkManager
         if (!is_a($this->bookmarkClass, \Survos\BookmarkBundle\Entity\ShareableBookmarkBase::class, true)) {
             throw new \LogicException('Receiving requires a ShareableBookmarkBase entity.');
         }
+
         return $this->em->wrapInTransaction(function () use ($user, $snapshot): object {
             $this->em->lock($user, \Doctrine\DBAL\LockMode::PESSIMISTIC_WRITE);
             $target = $snapshot->target;
@@ -59,13 +60,14 @@ class BookmarkManager
             $bookmark->notes = $snapshot->notes;
             $bookmark->tags = $snapshot->tags;
             $this->em->persist($bookmark);
+
             return $bookmark;
         });
     }
 
     public function isBookmarked(object $user, string $provider, string $dataset, string $coreCode, string $localId): bool
     {
-        return $this->findBookmark($user, $provider, $dataset, $coreCode, $localId) !== null;
+        return null !== $this->findBookmark($user, $provider, $dataset, $coreCode, $localId);
     }
 
     /**
@@ -82,19 +84,19 @@ class BookmarkManager
         ?string $dtoType = null,
         ?string $label = null,
     ): object {
-        if ($folder !== null && $folder->user !== $user) {
+        if (null !== $folder && $folder->user !== $user) {
             throw new \InvalidArgumentException('Bookmark folder must belong to its owner.');
         }
         $existing = $this->findBookmark($user, $provider, $dataset, $coreCode, $localId);
 
-        if ($existing !== null) {
+        if (null !== $existing) {
             $existing->folder = $folder;
 
-            if ($dtoType !== null) {
+            if (null !== $dtoType) {
                 $existing->dtoType = $dtoType;
             }
 
-            if ($label !== null) {
+            if (null !== $label) {
                 $existing->label = $label;
             }
 
@@ -123,7 +125,7 @@ class BookmarkManager
     public function remove(object $user, string $provider, string $dataset, string $coreCode, string $localId): void
     {
         $existing = $this->findBookmark($user, $provider, $dataset, $coreCode, $localId);
-        if ($existing !== null) {
+        if (null !== $existing) {
             $this->em->remove($existing);
             $this->em->flush();
         }
@@ -155,7 +157,7 @@ class BookmarkManager
 
     public function move(object $bookmark, ?object $folder): void
     {
-        if ($folder !== null && $folder->user !== $bookmark->user) {
+        if (null !== $folder && $folder->user !== $bookmark->user) {
             throw new \InvalidArgumentException('Bookmark folder must belong to its owner.');
         }
         $bookmark->folder = $folder;

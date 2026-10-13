@@ -13,6 +13,7 @@ use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
  * concrete User/Folder classes — see docs/bookmarks.md.
  *
  * @template T of object
+ *
  * @extends ServiceEntityRepository<T>
  */
 abstract class BookmarkRepositoryBase extends ServiceEntityRepository
@@ -37,7 +38,7 @@ abstract class BookmarkRepositoryBase extends ServiceEntityRepository
     public function findForUser(object $user, ?object $folder = null): array
     {
         $criteria = ['user' => $user];
-        if ($folder !== null) {
+        if (null !== $folder) {
             $criteria['folder'] = $folder;
         }
 

@@ -13,6 +13,7 @@ use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
  * class — see docs/bookmarks.md.
  *
  * @template T of object
+ *
  * @extends ServiceEntityRepository<T>
  */
 abstract class FolderRepositoryBase extends ServiceEntityRepository

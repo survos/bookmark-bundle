@@ -4,14 +4,21 @@ declare(strict_types=1);
 
 namespace Survos\BookmarkBundle;
 
-use Survos\BookmarkBundle\Service\{BookmarkManager, BookmarkSharing};
+use Survos\BookmarkBundle\Contract\BookmarkInterface;
+use Survos\BookmarkBundle\Contract\BookmarkOwnerInterface;
+use Survos\BookmarkBundle\Contract\FolderInterface;
+use Survos\BookmarkBundle\Contract\FolderItemInterface;
+use Survos\BookmarkBundle\Entity\Bookmark;
+use Survos\BookmarkBundle\Entity\Folder;
+use Survos\BookmarkBundle\Entity\FolderItem;
+use Survos\BookmarkBundle\Repository\BookmarkRepository;
+use Survos\BookmarkBundle\Repository\FolderRepository;
+use Survos\BookmarkBundle\Service\BookmarkManager;
+use Survos\BookmarkBundle\Service\BookmarkSharing;
 use Survos\Kit\AbstractSurvosBundle;
 use Survos\Kit\Traits\HasDoctrineEntities;
-use Survos\BookmarkBundle\Entity\{Bookmark, Folder, FolderItem};
-use Survos\BookmarkBundle\Contract\{BookmarkInterface, BookmarkOwnerInterface, FolderInterface, FolderItemInterface};
-use Survos\BookmarkBundle\Repository\{BookmarkRepository, FolderRepository};
-use Symfony\Component\Config\Definition\Processor;
 use Symfony\Component\Config\Definition\Configurator\DefinitionConfigurator;
+use Symfony\Component\Config\Definition\Processor;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 
@@ -74,30 +81,30 @@ final class SurvosBookmarkBundle extends AbstractSurvosBundle
         if (is_a($itemClass = self::folderItemClass($config) ?? '', FolderItemInterface::class, true)) {
             $targets[FolderItemInterface::class] = $itemClass;
         }
-        if ($config['owner_class'] !== null) {
+        if (null !== $config['owner_class']) {
             $targets[BookmarkOwnerInterface::class] = $config['owner_class'];
         }
-        if ($targets !== []) {
+        if ([] !== $targets) {
             $builder->prependExtensionConfig('doctrine', ['orm' => ['resolve_target_entities' => $targets]]);
         }
     }
 
     private function validateEntityConfiguration(array $config): void
     {
-        if ($config['auto_mapping'] && ($config['bookmark_class'] !== Bookmark::class || $config['folder_class'] !== Folder::class)) {
+        if ($config['auto_mapping'] && (Bookmark::class !== $config['bookmark_class'] || Folder::class !== $config['folder_class'])) {
             throw new \InvalidArgumentException('Disable survos_bookmark.auto_mapping when configuring custom bookmark/folder entities.');
         }
         if ($config['auto_mapping'] && !\in_array($config['folder_item_class'], [null, FolderItem::class], true)) {
             throw new \InvalidArgumentException('Disable survos_bookmark.auto_mapping when configuring a custom folder_item_class.');
         }
-        if (!$config['auto_mapping'] && $config['folder_item_class'] === FolderItem::class) {
+        if (!$config['auto_mapping'] && FolderItem::class === $config['folder_item_class']) {
             throw new \InvalidArgumentException('With auto_mapping disabled, folder_item_class must be your own FolderItemBase subclass.');
         }
-        if (!$config['auto_mapping'] && ($config['bookmark_class'] === Bookmark::class || $config['folder_class'] === Folder::class)) {
+        if (!$config['auto_mapping'] && (Bookmark::class === $config['bookmark_class'] || Folder::class === $config['folder_class'])) {
             throw new \InvalidArgumentException('With auto_mapping disabled, configure both custom bookmark_class and folder_class.');
         }
         $usesOwnerContract = is_a($config['bookmark_class'], Bookmark::class, true) || is_a($config['folder_class'], Folder::class, true);
-        if ($usesOwnerContract && ($config['owner_class'] === null || !is_a($config['owner_class'], BookmarkOwnerInterface::class, true))) {
+        if ($usesOwnerContract && (null === $config['owner_class'] || !is_a($config['owner_class'], BookmarkOwnerInterface::class, true))) {
             throw new \InvalidArgumentException('Configure owner_class with an entity implementing BookmarkOwnerInterface.');
         }
     }

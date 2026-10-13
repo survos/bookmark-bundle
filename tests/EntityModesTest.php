@@ -4,18 +4,27 @@ declare(strict_types=1);
 
 namespace Survos\BookmarkBundle\Tests;
 
-use Doctrine\ORM\Tools\{SchemaTool, SchemaValidator};
+use Doctrine\ORM\Tools\SchemaTool;
+use Doctrine\ORM\Tools\SchemaValidator;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
-use Survos\BookmarkBundle\Entity\{Bookmark, Folder};
-use Survos\BookmarkBundle\Model\{BookmarkSnapshot, TargetReference};
-use Survos\BookmarkBundle\Repository\{BookmarkRepository, FolderRepository};
+use Survos\BookmarkBundle\Entity\Bookmark;
+use Survos\BookmarkBundle\Entity\Folder;
+use Survos\BookmarkBundle\Model\BookmarkSnapshot;
+use Survos\BookmarkBundle\Model\TargetReference;
+use Survos\BookmarkBundle\Repository\BookmarkRepository;
+use Survos\BookmarkBundle\Repository\FolderRepository;
 use Survos\BookmarkBundle\Service\BookmarkManager;
-use Survos\BookmarkBundle\Tests\Fixtures\{BookmarkKernel, Custom, Owner\User};
+use Survos\BookmarkBundle\Tests\Fixtures\BookmarkKernel;
+use Survos\BookmarkBundle\Tests\Fixtures\Custom;
+use Survos\BookmarkBundle\Tests\Fixtures\Owner\User;
 
 final class EntityModesTest extends TestCase
 {
-    public static function modes(): array { return ['bundle entities' => [false], 'app subclasses' => [true]]; }
+    public static function modes(): array
+    {
+        return ['bundle entities' => [false], 'app subclasses' => [true]];
+    }
 
     #[DataProvider('modes')]
     public function testEntitiesPersistWithResolvedRelationsAndNoInheritanceTables(bool $custom): void
@@ -55,7 +64,9 @@ final class EntityModesTest extends TestCase
             self::assertSame(1, $em->find($folderClass, $folderId)->bookmarkCount);
             self::assertSame($bookmark, $container->get(BookmarkRepository::class)->findOneByTarget($bookmark->user, $target));
             self::assertCount(1, $container->get(FolderRepository::class)->findForUser($bookmark->user));
-            if ($custom) self::assertSame('custom', $bookmark->annotation);
+            if ($custom) {
+                self::assertSame('custom', $bookmark->annotation);
+            }
             $receipt = $manager->receive($bookmark->user, new BookmarkSnapshot($target, 'https://pressia.example/42'));
             self::assertSame($bookmark, $receipt);
             $newTarget = new TargetReference('another.example', 'Photo', '43');
