@@ -27,7 +27,7 @@ class Folder extends FolderBase implements FolderInterface
 
     /** @var Collection<int, FolderItemInterface> ordered membership; see FolderItemBase */
     #[ORM\OneToMany(targetEntity: FolderItemInterface::class, mappedBy: 'folder')]
-    #[ORM\OrderBy(['position' => 'ASC'])]
+    #[ORM\OrderBy(['position' => \SortDirection::Ascending])]
     public protected(set) Collection $items;
 
     public function __construct(
