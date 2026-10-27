@@ -57,6 +57,7 @@ class BookmarkManager
                 coreCode: $target->class, localId: $target->identifier, label: $snapshot->label);
             $bookmark->targetUrl = $snapshot->url;
             $bookmark->origin = $snapshot->origin;
+            $bookmark->mediaCode = $snapshot->mediaCode;
             $bookmark->notes = $snapshot->notes;
             $bookmark->tags = $snapshot->tags;
             $this->em->persist($bookmark);

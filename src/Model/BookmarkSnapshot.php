@@ -14,12 +14,16 @@ final readonly class BookmarkSnapshot
         public ?string $notes = null,
         public array $tags = [],
         public ?string $origin = null,
+        public ?string $mediaCode = null,
     ) {
         foreach (array_filter([$url, $origin], static fn ($value) => null !== $value) as $uri) {
             if (strlen($uri) > 2048 || !filter_var($uri, FILTER_VALIDATE_URL)
                 || !in_array(parse_url($uri, PHP_URL_SCHEME), ['http', 'https'], true)) {
                 throw new \InvalidArgumentException('Bookmark URLs must be absolute HTTP(S) URLs.');
             }
+        }
+        if (null !== $mediaCode && !preg_match('/^[a-f0-9]{16}$/D', $mediaCode)) {
+            throw new \InvalidArgumentException('Expected a Mediary asset code.');
         }
         if ((null !== $label && mb_strlen($label) > 500) || (null !== $notes && mb_strlen($notes) > 20000)) {
             throw new \InvalidArgumentException('Bookmark annotations are too long.');

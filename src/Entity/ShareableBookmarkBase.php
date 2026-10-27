@@ -19,6 +19,10 @@ abstract class ShareableBookmarkBase extends BookmarkBase
     #[Groups(['bookmark:read'])]
     public ?string $origin = null;
 
+    #[ORM\Column(length: 16, nullable: true)]
+    #[Groups(['bookmark:read'])]
+    public ?string $mediaCode = null;
+
     #[ORM\Column(type: 'text', nullable: true)]
     #[Groups(['bookmark:read', 'bookmark:write'])]
     public ?string $notes = null;

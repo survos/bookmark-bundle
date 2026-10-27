@@ -188,3 +188,58 @@ We adopt portable annotations and a distinct origin reference. We keep saving se
 from sharing and public publication, and leave update/delete synchronization explicit.
 Postmarks' single-actor model and outbox-generated Note IDs do not fit multi-user,
 repeatable peer receipts. This implementation contains no copied Postmarks code.
+
+## Portable folder documents (v1)
+
+`Exchange\BookmarkFolderDocument` is an owner-free envelope around the existing
+`BookmarkSnapshot` and `TargetReference` models. It accepts an array via
+`fromArray()` and exports the same shape with `toArray()`. JSON and YAML are
+alternative serializations of this shape; the bundle does not require a YAML
+parser or couple the contract to a Symfony application.
+
+```yaml
+format: survos/bookmark-folder
+version: 1
+folder:
+  name: Typewriters Appeal
+  slug: typewriters-appeal
+  visibility: public
+bookmarks:
+  - target:
+      source: nara
+      collection: catalog
+      class: photograph
+      identifier: '196468'
+    url: https://catalog.archives.gov/id/196468
+    label: Appeal — One out of every four
+    notes: '600,000 was the campaign target, not a verified collection total.'
+    tags: [appeal, target-not-total]
+    origin: null
+```
+
+`format`, `version`, all folder fields, the bookmarks list, all four target
+fields, and `url` are required. IDs are strings (quote numeric archival IDs in
+YAML). `label`, `notes`, and `origin` are nullable and optional; `tags` is an
+optional list, empty when omitted. Unknown keys, unsupported versions, duplicate
+target identities, unsafe URLs, invalid types and excessive field lengths fail
+validation. List order expresses folder order. Empty folders are supported.
+
+The host resolves the owner explicitly, validates the **whole document before
+writing**, and imports transactionally. Use `BookmarkManager::receive()` for
+create-if-absent behavior that preserves existing annotations and never sends to
+peers. Ordered membership uses `place()`; repeated imports preserve existing
+positions and append new selections in input order. Do not silently make an
+existing folder public because a file says so: require an explicit host edit or
+reject conflicting folder metadata. Export current stored annotations, not the
+last imported file. Export must retain legacy primary-folder entries as well as
+ordered membership; if a legacy bookmark has no canonical URL, resolve it
+explicitly instead of fabricating one.
+
+This is a bookmark-folder exchange contract, not a story/slideshow/movie format.
+Story Contract and exhibit-bundle remain responsible for later interpretation,
+resource expansion, narrative blocks, and projections. No story runtime or
+shared entity behavior changes are introduced by this optional codec.
+
+Snapshots also accept optional nullable `mediaCode`, a Mediary asset ID (16
+lowercase hexadecimal characters). Consumers resolve it to a source and generate
+preset URLs at render time; the exchange format does not store delivery URLs.
